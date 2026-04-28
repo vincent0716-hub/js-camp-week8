@@ -2,7 +2,7 @@
 // 工具函式
 // ========================================
 
-const dayjs = require('dayjs');
+const dayjs = require("dayjs");
 
 /**
  * 計算產品折扣率
@@ -11,6 +11,8 @@ const dayjs = require('dayjs');
  */
 function getDiscountRate(product) {
   // 請實作此函式
+  const rate = (product.price / product.origin_price) * 10;
+  return `${Math.round(rate)}折`; // 780/1200 = 65
 }
 
 /**
@@ -20,6 +22,10 @@ function getDiscountRate(product) {
  */
 function getAllCategories(products) {
   // 請實作此函式
+  const categoryArr = products.map((product) => product.category);
+  return products
+    .map((product) => product.category)
+    .filter((category, index) => categoryArr.indexOf(category) === index);
 }
 
 /**
@@ -30,6 +36,7 @@ function getAllCategories(products) {
 function formatDate(timestamp) {
   // 請實作此函式
   // 提示：dayjs.unix...
+  return dayjs.unix(timestamp).format("YYYY/MM/DD HH:mm");
 }
 
 /**
@@ -43,13 +50,16 @@ function getDaysAgo(timestamp) {
   // 1. 用 dayjs() 取得今天
   // 2. 用 dayjs.unix(timestamp) 取得日期
   // 3. 用 .diff() 計算天數差異
+  return dayjs().diff(dayjs.unix(timestamp), "day") === 0
+    ? "今天"
+    : `${dayjs().diff(dayjs.unix(timestamp), "day")}天前`;
 }
 
 /**
  * 驗證訂單使用者資料
  * @param {Object} data - 使用者資料
  * @returns {Object} - { isValid: boolean, errors: string[] }
- * 
+ *
  * 驗證規則：
  * - name: 不可為空
  * - tel: 必須是 09 開頭的 10 位數字
@@ -59,13 +69,39 @@ function getDaysAgo(timestamp) {
  */
 function validateOrderUser(data) {
   // 請實作此函式
+  // 請實作此函式
+  const isNameValid = data.name.trim().length !== 0;
+  const telRegex = /^09\d{8}$/;
+  const isTelValid = telRegex.test(data.tel);
+  const isMailValid = data.email.includes("@");
+  const isAddressValid = data.address.trim().length !== 0;
+  const roles = ["ATM", "Credit Card", "Apple Pay"];
+  const isRoleValid = roles.includes(data.payment);
+  if (
+    isNameValid &&
+    isMailValid &&
+    isAddressValid &&
+    isRoleValid &&
+    isTelValid
+  ) {
+    return { isValid: true, errors: [] };
+  } else {
+    const errors = [];
+    if (!isNameValid) errors.push("name錯誤");
+    if (!isTelValid) errors.push("tel錯誤");
+    if (!isMailValid) errors.push("mail錯誤");
+    if (!isAddressValid) errors.push("address格式錯誤");
+    if (!isRoleValid) errors.push("payment錯誤");
+
+    return { isValid: false, errors: errors };
+  }
 }
 
 /**
  * 驗證購物車數量
  * @param {number} quantity - 數量
  * @returns {Object} - { isValid: boolean, error?: string }
- * 
+ *
  * 驗證規則：
  * - 必須是正整數
  * - 不可小於 1
@@ -73,25 +109,31 @@ function validateOrderUser(data) {
  */
 function validateCartQuantity(quantity) {
   // 請實作此函式
+  if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 99) {
+    return { isValid: true };
+  } else {
+    return { isValid: false, error: "格式錯誤" };
+  }
 }
 
 /**
  * 格式化金額
  * @param {number} amount - 金額
  * @returns {string} - 格式化後的金額
- * 
+ *
  * 格式化規則：
  * - 加上 "NT$ " 前綴
  * - 數字需要千分位逗號分隔（例如：1000 → 1,000）
  * - 使用台灣格式（zh-TW）
- * 
+ *
  * 範例：
  * formatCurrency(1000) → "NT$ 1,000"
  * formatCurrency(1234567) → "NT$ 1,234,567"
- * 
+ *
  */
 function formatCurrency(amount) {
   // 請實作此函式
+  return `NT$ ${amount.toLocaleString("zh-TW")}`;
 }
 
 module.exports = {
@@ -101,5 +143,5 @@ module.exports = {
   getDaysAgo,
   validateOrderUser,
   validateCartQuantity,
-  formatCurrency
+  formatCurrency,
 };

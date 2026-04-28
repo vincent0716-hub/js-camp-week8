@@ -2,8 +2,18 @@
 // 訂單服務
 // ========================================
 
-const { createOrder, fetchOrders, updateOrderStatus, deleteOrder } = require('../api');
-const { validateOrderUser, formatDate, getDaysAgo, formatCurrency } = require('../utils');
+const {
+  createOrder,
+  fetchOrders,
+  updateOrderStatus,
+  deleteOrder,
+} = require("../api");
+const {
+  validateOrderUser,
+  formatDate,
+  getDaysAgo,
+  formatCurrency,
+} = require("../utils");
 
 /**
  * 建立新訂單
@@ -15,6 +25,13 @@ async function placeOrder(userInfo) {
   // 提示：先用 utils validateOrderUser() 驗證使用者資料，驗證失敗時回傳 { success: false, errors: [...] }
   // 驗證通過後，呼叫 createOrder() 建立訂單
   // 回傳格式：{ success: true, data: ... } / { success: false, errors: [...] }
+  const validCheck = validateOrderUser(userInfo);
+  const isValid = validCheck.isValid;
+  if (!isValid) {
+    return { success: false, errors: validCheck.errors };
+  }
+  const res = await createOrder();
+  return { success: true, data: res };
 }
 
 /**
@@ -24,6 +41,8 @@ async function placeOrder(userInfo) {
 async function getOrders() {
   // 請實作此函式
   // 提示：呼叫 fetchOrders() 取得訂單陣列並回傳
+  const res = await fetchOrders();
+  return res;
 }
 
 /**
@@ -33,6 +52,8 @@ async function getOrders() {
 async function getUnpaidOrders() {
   // 請實作此函式
   // 提示：呼叫 fetchOrders() 後，篩選出 paid 為 false 的訂單
+  const res = await fetchOrders();
+  return res.filter((order) => order.paid === false);
 }
 
 /**
@@ -42,6 +63,8 @@ async function getUnpaidOrders() {
 async function getPaidOrders() {
   // 請實作此函式
   // 提示：呼叫 fetchOrders() 後，篩選出 paid 為 true 的訂單
+  const res = await fetchOrders();
+  return res.filter((order) => order.paid === true);
 }
 
 /**
@@ -54,6 +77,11 @@ async function updatePaymentStatus(orderId, isPaid) {
   // 請實作此函式
   // 提示：呼叫 updateOrderStatus()
   // 回傳格式：{ success: true, data: ... } / { success: false, error: ... }
+  const res = await updateOrderStatus();
+  if (!res.status) {
+    return { success: res.status, error: res.message };
+  }
+  return { success: res.status, data: res };
 }
 
 /**
@@ -65,6 +93,11 @@ async function removeOrder(orderId) {
   // 請實作此函式
   // 提示：呼叫 deleteOrder()
   // 回傳格式：{ success: true, data: ... } / { success: false, error: ... }
+  const res = await deleteOrder();
+  if (!res.status) {
+    return { success: res.status, error: res.message };
+  }
+  return { success: res.status, data: res };
 }
 
 /**
@@ -85,6 +118,17 @@ async function removeOrder(orderId) {
  */
 function formatOrder(order) {
   // 請實作此函式
+  return {
+    id: order.id,
+    user: order.user,
+    products: order.products,
+    total: order.total,
+    totalFormatted: formatCurrency(order.total),
+    paid: order.paid,
+    paidText: order.paid === true ? "已付款" : "未付款",
+    createdAt: formatDate(order.createdAt),
+    daysAgo: getDaysAgo(order.createdAt),
+  };
 }
 
 /**
@@ -113,6 +157,33 @@ function displayOrders(orders) {
   // 商品明細：
   //   - 產品名稱 x 2（產品數量）
   // ========================================
+  if (orders.length === 0) {
+    console.log("orders是空的");
+  } else {
+    console.log("訂單列表：");
+    console.log("========================================");
+    cart.carts.map((order, ind) => {
+      const formatOrder = formatOrder(order);
+      console.log(`訂單 ${ind}`);
+      console.log("----------------------------------------");
+      console.log(`訂單編號：${formatOrder.id}`);
+      console.log(`顧客姓名：：${formatOrder.user.name}`);
+      console.log(`聯絡電話：${formatOrder.user.tel}`);
+      console.log(`寄送地址：${formatOrder.user.address}`);
+      console.log(`付款方式：${formatOrder.user.payment}`);
+      console.log(`訂單金額：${formatOrder.totalFormatted}`);
+      console.log(`付款狀態：${formatOrder.paidText}`);
+      console.log(
+        `建立時間：${formatOrder.createdAt} (${formatOrder.daysAgo})`,
+      );
+      console.log("----------------------------------------");
+      console.log("商品明細：");
+      order.products.map((product) => {
+        console.log(`  - ${product.title} x ${order.quantity}（產品數量）`);
+      });
+    });
+    console.log("========================================");
+  }
 }
 
 module.exports = {
@@ -123,5 +194,5 @@ module.exports = {
   updatePaymentStatus,
   removeOrder,
   formatOrder,
-  displayOrders
+  displayOrders,
 };
